@@ -12,3 +12,8 @@ export const _getWinLoss = ({accountId, includedAccountIds}) => axios({
         included_account_id: includedAccountIds
     }
 })
+
+export const _getWordCloud = ({accountId}) => axios({
+    method: 'get',
+    url: `https://api.opendota.com/api/players/${accountId}/wordcloud`,
+})

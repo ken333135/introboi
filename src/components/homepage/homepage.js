@@ -4,18 +4,19 @@ import q from 'q';
 import {
     Table,
     Card,
-    Row,
-    Col
 } from 'antd'
 
 import {
     _getPlayerData,
-    _getWinLoss
+    _getWinLoss,
+    _getWordCloud,
 } from '../../services'
 
 import '../../css/homepage.css'
 
-const steamIds = ['39286649','84406354','101745193']
+import Heatmap from './heatmap'
+
+const steamIds = ['39286649','84406354','101745193','302147713']
 
 class Homescreen extends React.Component {
 
@@ -24,6 +25,7 @@ class Homescreen extends React.Component {
         this.state = {
             playerData: [],
             winlossData: [],
+            wordCloudData: [],
         }
     }
 
@@ -31,7 +33,10 @@ class Homescreen extends React.Component {
         return (
             <Card>
                 {this.renderProfileTable()}
-                {this.renderPartnerHeatmap()}
+                <Heatmap 
+                    playerData={this.state.playerData}
+                    winlossData={this.state.winlossData}
+                    steamIds={steamIds}/>
             </Card>
         )
     }
@@ -39,13 +44,13 @@ class Homescreen extends React.Component {
     componentDidMount() {
         this.getPlayerData()
         this.getWinLoss()
+        this.getWordCloud()
     }
 
     getPlayerData = () => {
         q.all(steamIds.map(_steamId => _getPlayerData({ accountId: _steamId })))
         .then(res => {
             let playerData = res.map(_playerData => _playerData.data)
-            console.log({playerData})
             this.setState({
                 playerData,
             })
@@ -58,7 +63,6 @@ class Homescreen extends React.Component {
         q.all(steamIds.map(_steamId => {
             // Loop through all other steamIds other than itself
             return q.all(steamIds .map(_includedSteamId => {
-
                 if (_includedSteamId===_steamId) {
                     return {data: {win: 0, lose: 0}}
                 } else {
@@ -77,6 +81,17 @@ class Homescreen extends React.Component {
         })
     }
 
+    getWordCloud = () => {
+        q.all(steamIds.map(_steamId => _getWordCloud({ accountId: _steamId })))
+        .then(res => {
+            let wordCloudData = res.map(_wordCloudData => _wordCloudData.data)
+            console.log({wordCloudData})
+            this.setState({
+                wordCloudData,
+            })
+        })
+    }
+
     renderProfileTable = () => {
 
         const { playerData } = this.state
@@ -85,7 +100,7 @@ class Homescreen extends React.Component {
             {
                 title: 'Name',
                 dataIndex: 'profile',
-                key: 'name',
+                key: 'profile',
                 render: (profile) => 
                 <div style={{display: 'flex', alignItems: 'center'}}>
                     <img alt='profile-avatar' src={profile.avatar}/>
@@ -94,11 +109,11 @@ class Homescreen extends React.Component {
             }, {
                 title: 'Rank',
                 dataIndex: 'competitive_rank',
-                key: 'rank'
+                key: 'competitive_rank'
             }, {
                 title: 'MMR',
                 dataIndex: 'mmr_estimate',
-                key: 'mmr',
+                key: 'mmr_estimate',
                 render: (mmr) => mmr.estimate
             }
         ]
@@ -106,59 +121,11 @@ class Homescreen extends React.Component {
             <Table 
             columns={columns} 
             dataSource={playerData} 
-            pagination={false}/>
+            pagination={false}
+            rowKey={record => record.profile.account_id}/>
         )
     }
 
-    renderPartnerHeatmap = () => {
-
-        const {playerData} = this.state
-
-        return(
-            <div>
-                <Row>
-                    <Col span={24/(steamIds.length+1)}></Col>
-                    {playerData.map(_playerData => {
-                        return <Col span={24/(steamIds.length+1)}>{this.heatmapAvatar(_playerData.profile.avatar)}</Col>
-                    })}
-                </Row>
-                {playerData.map((_playerData, index) => {
-                    return this.heatmapRow(_playerData, index)
-                })
-                }
-            </div>
-        )
-    }
-
-    heatmapRow = (_playerData, index) => {
-
-        const {winlossData} = this.state
-
-        return (
-            <Row>
-                <Col span={24/(steamIds.length+1)}>{this.heatmapAvatar(_playerData.profile.avatar)}</Col>
-                {winlossData[index] && winlossData[index].map(_winlossData => {
-                    return <Col span={24/(steamIds.length+1)}>{this.heatmapBox(_winlossData.data)}</Col>
-                })}
-            </Row>
-        )
-    }
-
-    heatmapAvatar = (avatarUrl) => {
-        return (
-            <div className='heatmap-box'>
-                <img alt='profile-avatar' src={avatarUrl}/>
-            </div>
-        )
-    }
-
-    heatmapBox = (data) => {
-        return (
-            <div className='heatmap-box'>
-                <p>{`${data.win}/${data.lose}`}</p>
-            </div>
-        )
-    }
 }
 
 export default Homescreen
