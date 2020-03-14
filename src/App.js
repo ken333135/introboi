@@ -1,18 +1,16 @@
 import React from 'react';
-import { Form, Select, InputNumber, DatePicker, Switch, Slider, Button } from 'antd';
 import './App.css';
 
-const { Option } = Select;
+import Homepage from './pages/index'
 
 const App = () => (
   <>
     <section style={{textAlign: 'center'}}>
-      <h1 style={{textAlign: 'center'}}>Ant Design</h1>
-      <img style={{width: '40px', height: '40px'}} src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"/>
+      <h1 style={{textAlign: 'center'}}>Intro Boys</h1>
+      <h3>Who is the most Intro?</h3>
     </section>
-    <div>
-      HI DESHENG
-    </div>
+
+    <Homepage />
   </>
 );
 
