@@ -17,3 +17,13 @@ export const _getWordCloud = ({accountId}) => axios({
     method: 'get',
     url: `https://api.opendota.com/api/players/${accountId}/wordcloud`,
 })
+
+export const _getHeroData = ({accountId}) => axios({
+    method: 'get',
+    url: `https://api.opendota.com/api/players/${accountId}/heroes`,
+})
+
+export const _getHeroes = () => axios({
+    method: 'get',
+    url: `https://api.opendota.com/api/heroes`,
+})

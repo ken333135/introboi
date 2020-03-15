@@ -60,10 +60,12 @@ class Heatmap extends React.Component {
 
     heatmapBox = (data) => {
 
-        const percentageWinLoss = (data.win/(data.win+data.lose) || 0).toFixed(2) * 100
-
+        const percentageWinLoss = parseInt( (data.win/(data.win+data.lose) || 0).toFixed(2) * 100 )
+        const redColor = percentageWinLoss <= 50 ? Math.floor(((percentageWinLoss)*2/100)*255) : 0
+        const greenColor = percentageWinLoss > 50 ? Math.floor(((percentageWinLoss-50)*2/100)*255) : 0
+        
         return (
-            <div className='heatmap-box heatmap-data'>
+            <div className='heatmap-box heatmap-data' style={{backgroundColor: `rgba(${redColor},${greenColor},0,0.4)`}}>
                 <p>{`${data.win}/${data.lose}`}</p>
                 <p>{`${percentageWinLoss}%`}</p>
             </div>

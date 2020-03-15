@@ -10,13 +10,15 @@ import {
     _getPlayerData,
     _getWinLoss,
     _getWordCloud,
+    _getHeroData,
+    _getHeroes
 } from '../../services'
 
 import '../../css/homepage.css'
 
 import Heatmap from './heatmap'
 
-const steamIds = ['39286649','84406354','101745193','302147713']
+const steamIds = ['39286649','84406354','101745193','302147713','297366026']
 
 class Homescreen extends React.Component {
 
@@ -26,6 +28,7 @@ class Homescreen extends React.Component {
             playerData: [],
             winlossData: [],
             wordCloudData: [],
+            heroData: [],
         }
     }
 
@@ -44,7 +47,8 @@ class Homescreen extends React.Component {
     componentDidMount() {
         this.getPlayerData()
         this.getWinLoss()
-        this.getWordCloud()
+        // this.getWordCloud()
+        this.getHeroData()
     }
 
     getPlayerData = () => {
@@ -92,9 +96,73 @@ class Homescreen extends React.Component {
         })
     }
 
+    getHeroData = () => {
+
+        _getHeroes()
+        .then(_heroes => {
+            console.log({_heroes})
+            // Create dict for id:heroName
+            const heroes = {}
+            _heroes.data.map(_hero => heroes[_hero.id] = _hero.localized_name)
+            
+            return this.setState({
+                heroes
+            })
+        })
+        .then(res => {
+            
+            q.all(steamIds.map(_steamId => _getHeroData({ accountId: _steamId })))
+            .then(res => {
+                let heroData = res.map(_heroData => _heroData.data)
+                // Sort Hero Data for each player by most games and highest win rate
+                heroData = heroData.map(_playerHeroData => {
+
+                    let highestWinrate = {games: 1, win: 0}
+                    let mostWins = { win: 0 }
+
+                    _playerHeroData.map(_heroData => {
+                        // check for mostWins
+                        if (_heroData.win > mostWins.win) {
+                            mostWins = _heroData
+                        }
+                        // check for highestWinRate (min 30 games)
+                        if ( (_heroData.games > 30) && (_heroData.win / _heroData.games) > (mostWins.win / mostWins.games)) {
+                            highestWinrate = _heroData
+                        }
+                    })
+                    // append hero name
+                    highestWinrate = {
+                        ...highestWinrate,
+                        heroName: this.state.heroes[highestWinrate.hero_id]
+                    }
+
+                    mostWins = {
+                        ...mostWins,
+                        heroName: this.state.heroes[mostWins.hero_id]
+                    }
+
+                    console.log({ highestWinrate, mostWins })
+
+                    return {
+                        highestWinrate,
+                        mostWins
+                    }
+                    
+                })
+
+                console.log({heroData})
+                this.setState({
+                    heroData,
+                })
+            })
+
+        })
+
+    }
+
     renderProfileTable = () => {
 
-        const { playerData } = this.state
+        const { playerData, heroData } = this.state
 
         const columns = [
             {
@@ -115,6 +183,22 @@ class Homescreen extends React.Component {
                 dataIndex: 'mmr_estimate',
                 key: 'mmr_estimate',
                 render: (mmr) => mmr.estimate
+            }, {
+                title: 'Most Wins',
+                dataIndex: 'profile',
+                render: (profile, record, index) => 
+                <div>
+                    <p>{heroData[index] && heroData[index].mostWins.heroName}</p>
+                    <p>{heroData[index] && heroData[index].mostWins.win}</p>
+                </div> 
+            }, {
+                title: 'Highest Win Rate',
+                dataIndex: 'profile',
+                render: (profile, record, index) => 
+                <div>
+                    <p>{heroData[index] && heroData[index].highestWinrate.heroName}</p>
+                    <p>{heroData[index] && heroData[index].highestWinrate.win/heroData[index].highestWinrate.games}</p>
+                </div> 
             }
         ]
         return (
